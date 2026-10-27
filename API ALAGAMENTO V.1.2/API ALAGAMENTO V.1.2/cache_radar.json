@@ -1,0 +1,7 @@
+{
+  "consultado_em": "2026-10-22T23:07:24+00:00",
+  "horario_radar": "2026-10-22T23:00:00+00:00",
+  "tile_url": "https://tilecache.rainviewer.com/v2/radar/55ba03bd5d9e/256/{z}/{x}/{y}/2/1_0.png",
+  "fonte": "RainViewer (radar de precipitação observada, cores Universal Blue)",
+  "descricao": "Imagens recentes de radar; alcance e disponibilidade variam conforme cobertura. Resolução gratuita até zoom 7."
+}

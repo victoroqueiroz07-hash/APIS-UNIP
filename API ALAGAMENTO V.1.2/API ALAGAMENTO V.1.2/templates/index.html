@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b253f">
+  <meta name="description" content="Mapa colaborativo de alagamentos e visualização meteorológica de chuva para o Grande ABC Paulista.">
+  <title>Alerta ABC | Mapa colaborativo de alagamentos</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="topo">
+    <div class="container barra">
+      <a class="marca" href="/" aria-label="Alerta ABC — página inicial"><span class="icone-marca">≈</span><span>Alerta<span class="destaque">ABC</span></span></a>
+      <span class="selo">Projeto acadêmico · Dados colaborativos</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="apresentacao">
+      <div>
+        <p class="chapeu"><span class="ponto-status"></span> Monitoramento colaborativo · Grande ABC</p>
+        <h1>Informação que ajuda a <span>prevenir.</span></h1>
+        <p class="introducao">Consulte relatos de alagamento, compartilhe uma ocorrência e acompanhe a intensidade da chuva em um mapa de calor baseado em dados meteorológicos, sem pontos inventados.</p>
+      </div>
+      <div class="indicador-intro"><span class="mini-icone">↗</span><strong>2 mapas</strong><small>Ocorrências e chuva atual e prevista</small></div>
+    </section>
+
+    <nav class="abas" aria-label="Mapas disponíveis">
+      <button id="aba-ocorrencias" type="button" class="aba ativo" aria-controls="secao-ocorrencias" aria-selected="true" role="tab">◉ <span>Mapa de ocorrências</span></button>
+      <button id="aba-chuva" type="button" class="aba" aria-controls="secao-chuva" aria-selected="false" role="tab">◈ <span>Mapa de calor das chuvas</span></button>
+    </nav>
+
+    <section id="secao-ocorrencias" class="area-mapa" role="tabpanel" aria-labelledby="aba-ocorrencias">
+      <div class="cabecalho-secao">
+        <div><p class="chapeu azul">MAPA COLABORATIVO</p><h2>Alagamentos reportados</h2><p>Selecione qualquer ponto no mapa para registrar uma ocorrência. Não é preciso ativar o GPS.</p></div>
+        <div class="contador"><strong id="total-ocorrencias">—</strong><span>ocorrências cadastradas</span></div>
+      </div>
+      <div class="grade-principal">
+        <div class="cartao mapa-cartao">
+          <div class="barra-mapa"><span><i class="bolinha verde"></i> Relatos enviados pela comunidade</span><button class="botao-linha" type="button" id="atualizar-ocorrencias">↻ Atualizar</button></div>
+          <div id="mapa-ocorrencias" class="mapa" role="application" aria-label="Mapa para selecionar e consultar locais de alagamento"></div>
+          <div class="rodape-mapa"><span><span class="legenda-pino">●</span> Marcadores azuis: relatos · <span class="legenda-pino selecionado">●</span> Marcador verde: novo registro</span><span>Mapa: © OpenStreetMap</span></div>
+        </div>
+        <aside class="cartao painel-registro">
+          <div class="circulo-form">＋</div>
+          <h3>Registrar alagamento</h3>
+          <p class="texto-pequeno">Viu um local alagado? Compartilhe para informar outras pessoas.</p>
+          <div class="etapas"><span>1</span><p><strong>Escolha o local</strong><small>Clique diretamente no mapa.</small></p></div>
+          <div class="local-escolhido" id="ponto-escolhido">Nenhum ponto selecionado.</div>
+          <button class="botao-outline" id="botao-gps" type="button">⌖ &nbsp;Usar minha localização (opcional)</button>
+          <div class="etapas"><span>2</span><p><strong>Descreva a situação</strong><small>Ajude outras pessoas a entender o relato.</small></p></div>
+          <label for="descricao">Descrição <span class="opcional">(opcional)</span></label>
+          <textarea id="descricao" maxlength="1000" placeholder="Ex.: Rua com água acumulada, próximo à esquina..."></textarea>
+          <button class="botao-principal" id="botao-registrar" type="button">Registrar ocorrência <span aria-hidden="true">→</span></button>
+          <p class="aviso-status" id="mensagem" role="status" aria-live="polite"></p>
+          <p class="aviso-privacidade">A localização do dispositivo só será solicitada se você clicar no botão de GPS.</p>
+        </aside>
+      </div>
+      <div class="nota"><strong>Como gerenciar:</strong> clique em um marcador azul para comentar, editar ou excluir comentários e excluir o ponto. <span>Sem login, essas ações ficam disponíveis a qualquer visitante.</span></div>
+    </section>
+
+    <section id="secao-chuva" class="area-mapa oculto" role="tabpanel" aria-labelledby="aba-chuva" hidden>
+      <div class="cabecalho-secao">
+        <div><p class="chapeu azul">CONDIÇÕES METEOROLÓGICAS</p><h2>Mapa de calor das chuvas</h2><p>Compare a chuva atual com a maior intensidade prevista nas próximas 24 horas. Consulte também as imagens recentes de radar. Nenhuma área é inserida manualmente.</p></div>
+        <div class="contador meteorologia"><strong id="max-chuva">—</strong><span id="descricao-indicador">maior pico horário previsto em 24h</span></div>
+      </div>
+      <div class="aviso-climatico"><strong>Informação importante:</strong> os <strong>mapas coloridos</strong> usam estimativas e previsões da Open-Meteo (modelagem), e o <strong>radar</strong> usa imagens recentes da RainViewer (observação remota). Essas informações não identificam, por si só, ruas alagadas ou locais oficialmente suscetíveis a inundação.</div>
+      <div class="grade-risco">
+        <div class="cartao mapa-cartao">
+          <div class="barra-mapa"><span><i class="bolinha verde"></i> Intensidade de chuva · dados meteorológicos</span><button class="botao-linha" id="botao-atualizar-chuva" type="button">↻ Verificar dados</button></div>
+          <div id="mapa-chuva" class="mapa mapa-calor" role="application" aria-label="Mapa da intensidade de chuva estimada ou prevista para o Grande ABC"></div>
+          <div class="rodape-mapa"><span id="status-chuva" role="status" aria-live="polite">Dados ainda não consultados.</span><span>Fontes: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> e <a href="https://www.rainviewer.com/" target="_blank" rel="noopener noreferrer">RainViewer</a></span></div>
+        </div>
+        <aside class="cartao painel-camadas">
+          <h3>Visualização das chuvas</h3>
+          <p class="texto-pequeno">Os três modos utilizam informações meteorológicas externas. Selecione o período que deseja visualizar.</p>
+          <label class="opcao-camada"><input name="modo-chuva" id="modo-previsao" type="radio" value="previsao" checked><span class="camada-icon chuva">◈</span><span><strong>Previsão das próximas 24h</strong><small>Maior intensidade horária prevista pela Open-Meteo · pode mostrar chuva futura</small></span></label>
+          <label class="opcao-camada"><input name="modo-chuva" id="modo-calor" type="radio" value="calor"><span class="camada-icon chuva">◈</span><span><strong>Chuva neste momento</strong><small>Estimativa atual em mm/h · sem cores se estiver seco</small></span></label>
+          <label class="opcao-camada"><input name="modo-chuva" id="modo-radar" type="radio" value="radar"><span class="camada-icon relatos">◉</span><span><strong>Radar de chuva recente</strong><small>Imagens RainViewer · cores azuis oficiais</small></span></label>
+          <div class="linha-separadora"></div>
+          <div class="titulo-controles">Visibilidade da camada <span id="texto-opacidade">90%</span></div>
+          <input type="range" id="opacidade" min="50" max="100" value="90" aria-label="Opacidade do mapa de chuva">
+          <div class="linha-separadora"></div>
+          <div id="legenda-calor">
+            <div class="titulo-controles">Intensidade estimada ou prevista (mm/h)</div>
+            <div class="gradiente"></div>
+            <div class="marcas-legenda"><span>0,1</span><span>1</span><span>3</span><span>6</span><span>12+</span></div>
+            <p class="texto-pequeno nota-legenda">Azul: fraca; verde/amarelo: maior intensidade; laranja/vermelho: mais intensa. Sem cor: sem chuva significativa estimada.</p>
+          </div>
+          <div id="legenda-radar" hidden>
+            <p class="texto-pequeno nota-legenda"><strong>Radar observado:</strong> escala Universal Blue da RainViewer. O provedor limita a resolução a zoom 7; não é um mapa de intensidade em mm/h.</p>
+          </div>
+          <div class="linha-separadora"></div>
+          <div class="dado-atualizacao"><small>Horário dos dados apresentados</small><strong id="horario-atualizacao">Aguardando...</strong></div>
+          <div class="dado-atualizacao"><small>Consulta ao servidor</small><strong id="horario-consulta">Aguardando...</strong></div>
+          <p class="texto-pequeno nota-legenda">As cores são interpoladas entre amostras do modelo. No modo 24 horas, representam o maior pico horário previsto em cada local (não chuva simultânea). Se não houver previsão de chuva, a área consultada aparece delimitada, mas sem manchas inventadas.</p>
+        </aside>
+      </div>
+      <div class="fontes-nota">Para consultar <strong>áreas oficialmente suscetíveis</strong>, utilize as cartas e camadas técnicas do município. Exemplo: <a href="https://portais.santoandre.sp.gov.br/defesacivil/siga-sistema-de-informacoes-geograficas-andreense/" target="_blank" rel="noopener noreferrer">SIGA da Defesa Civil de Santo André ↗</a>. Fontes meteorológicas: <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo ↗</a> e <a href="https://www.rainviewer.com/api/weather-maps-api.html" target="_blank" rel="noopener noreferrer">RainViewer ↗</a>. A visualização de calor utiliza interpolação gráfica, não novas medições.</div>
+    </section>
+  </main>
+  <footer><div class="container rodape"><span>≈ &nbsp;AlertaABC — Projeto acadêmico</span><span>Os relatos não são verificados por órgãos oficiais. Em emergências, acione os serviços públicos competentes.</span></div></footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+</body>
+</html>
